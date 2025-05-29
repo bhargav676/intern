@@ -5,7 +5,7 @@ const App = () => {
     <div>
       <h1 className=' bg-amber-200'>hello
         world
-      </h1> 
+      </h1>
       <p>welcome</p>
     </div>
   )
