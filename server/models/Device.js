@@ -10,5 +10,5 @@ const deviceSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-deviceSchema.index({ location: '2dsphere' }); // For geospatial queries
+deviceSchema.index({ location: '2dsphere' }); // For geospatial queries 
 module.exports = mongoose.model('Device', deviceSchema);
