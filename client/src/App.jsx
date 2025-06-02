@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Signup from './components/Signup';
-import Login from './components/Login';
-import Layout from './components/Layout';
-import DashboardHomePage from './components/DashboardHomePage';
-import Alerts from './components/Alerts';
-import AdminDashboard from './components/AdminDashboard';
+import Signup from './components/user/Signup';
+import Login from './components/user/Login';
+import Layout from './components/user/Layout';
+import DashboardHomePage from './components/user/DashboardHomePage';
+import Alerts from './components/user/Alerts';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const token = localStorage.getItem('token');
