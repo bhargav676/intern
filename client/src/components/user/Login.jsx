@@ -16,7 +16,7 @@ const Login = () => {
         password,
       });
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('accessId', response.data.user.accessId); // Store accessId
+      localStorage.setItem('accessId', response.data.user.accessId);
       if (response.data.user.role === 'admin') {
         navigate('/admin');
       } else {
@@ -56,9 +56,6 @@ const Login = () => {
             Login
           </button>
         </form>
-        <p className="text-sm text-slate-600 mt-4">
-          Don’t have an account? <a href="/signup" className="text-blue-600 hover:underline">Sign up</a>
-        </p>
       </div>
     </div>
   );

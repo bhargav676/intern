@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const Device = require('../models/Device');
-const AdminSensorData = require('../models/AdminSensorData');
-const UserSensorData = require('../models/UserSensorData');
+const bcrypt = require('bcrypt'); 
 const User = require('../models/User');
+const UserSensorData = require('../models/UserSensorData');
+const Device = require('../models/Device');
 const authMiddleware = require('../middleware/auth');
+
 
 const adminMiddleware = (req, res, next) => {
   if (req.user.role !== 'admin') {
@@ -13,63 +14,55 @@ const adminMiddleware = (req, res, next) => {
   next();
 };
 
-router.post('/sensor-data', async (req, res) => {
-  try {
-    const { deviceId, ph, turbidity, tds, latitude, longitude } = req.body;
-    if (!deviceId || !ph || !turbidity || !tds || !latitude || !longitude) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    await Device.findOneAndUpdate(
-      { deviceId },
-      {
-        deviceId,
-        name: `Water Monitor ${deviceId}`,
-        location: { type: 'Point', coordinates: [longitude, latitude] },
-      },
-      { upsert: true }
-    );
-
-    const sensorData = new AdminSensorData({ deviceId, ph, turbidity, tds });
-    await sensorData.save();
-
-    const io = req.app.get('io');
-    io.emit('newAdminSensorData', { deviceId, ph, turbidity, tds, timestamp: sensorData.timestamp });
-
-    res.status(201).json({ message: 'Data saved' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 router.get('/devices', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const devices = await Device.find();
-    res.status(200).json(devices);
+    const devices = await Device.find(); 
+    res.status(200).json(devices); 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.get('/sensor-data/:deviceId', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/user-sensor-data/:userId', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { deviceId } = req.params;
-    const sensorData = await AdminSensorData.find({ deviceId }).sort({ timestamp: -1 }).limit(10);
-    res.status(200).json(sensorData);
+    const userId = req.params.userId;
+    const user = await User.findById(userId).select('username');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Fetch all sensor data for the user, sorted by timestamp (newest first)
+    const sensorData = await UserSensorData.find({ userId }).sort({ timestamp: -1 });
+
+    res.status(200).json({
+      username: user.username,
+      sensorData: sensorData.length > 0 ? sensorData : [], // Return all records, or an empty array if none exist
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error fetching user sensor data:', err);
+    res.status(500).json({ message: 'Server error: Unable to fetch user sensor data' });
   }
 });
 
-router.get('/user-sensor-data', authMiddleware, async (req, res) => {
+router.get('/user-sensor-data', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const userSensorData = await UserSensorData.find()
-      .populate('userId', 'username email')
-      .sort({ timestamp: -1 });
-    res.status(200).json(userSensorData);
+    const data = await UserSensorData.find().populate('userId', 'username');
+    res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, email, password: hashedPassword, role });
+    await user.save();
+    res.status(201).json({ message: 'User created' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

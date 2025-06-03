@@ -164,8 +164,6 @@ router.get('/esp-config', (req, res) => {
 });
 
 
-// (Optional) Endpoint to get all historical readings for a specific device
-// GET /api/sensors/readings/:deviceIdParam
 router.get('/readings/:deviceIdParam', async (req, res) => {
   try {
     const device = await Device.findOne({ deviceId: req.params.deviceIdParam });

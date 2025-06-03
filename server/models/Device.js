@@ -9,7 +9,7 @@ const deviceSchema = new mongoose.Schema({
       enum: ['Point'],
       default: 'Point',
     },
-    coordinates: { type: [Number], required: true }, // [longitude, latitude]
+    coordinates: { type: [Number], required: true }, 
   },
   createdAt: { type: Date, default: Date.now },
 });

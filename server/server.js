@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [ 'http://localhost:5173'], // Support React and user frontend
+    origin: ['http://localhost:5173'],
     methods: ['GET', 'POST'],
   },
 });
@@ -21,7 +21,11 @@ app.use(cors());
 app.use(express.json());
 app.set('io', io);
 
-// Routes
+// Debug imports
+console.log('userRoutes type:', typeof userRoutes);
+console.log('adminRoutes type:', typeof adminRoutes);
+
+
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 

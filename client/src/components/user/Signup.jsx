@@ -21,7 +21,7 @@ const Signup = () => {
         username, email, password, confirmPassword,
       });
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('accessId', response.data.user.accessId); // Store accessId
+      localStorage.setItem('accessId', response.data.user.accessId); 
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data || 'Registration failed');

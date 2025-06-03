@@ -1,32 +1,30 @@
 import React from 'react';
 import { LayersIcon, ExpandIcon, SatelliteIcon } from './Icons';
 
-const MapControls = ({ activeMapLayer, onSetMapLayer, onZoomToFit }) => {
-  return (
-    <div id="mapcontrols" className="absolute top-3 right-3 z-[1000] space-y-2 bg-white p-1.5 rounded-lg shadow-lg">
-      <button
-        title="Streets View"
-        onClick={() => onSetMapLayer('streets')}
-        className={`p-2 rounded hover:bg-slate-100 ${activeMapLayer === 'streets' ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-      >
-        <LayersIcon className="h-5 w-5" />
-      </button>
-      <button
-        title="Satellite/Hybrid View"
-        onClick={() => onSetMapLayer('hybrid')}
-        className={`p-2 rounded hover:bg-slate-100 ${activeMapLayer === 'hybrid' ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-      >
-        <SatelliteIcon className="h-5 w-5" />
-      </button>
-      <button
-        title="Zoom to Fit All Devices"
-        onClick={onZoomToFit}
-        className="p-2 rounded hover:bg-slate-100 text-slate-600"
-      >
-        <ExpandIcon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-};
+const MapControls = ({ activeMapLayer, onSetMapLayer, onZoomToFit }) => (
+  <div className="absolute top-4 right-16 z-10 bg-white rounded-lg shadow-lg p-2 flex flex-col space-y-2">
+    <button
+      onClick={() => onSetMapLayer('streets')}
+      className={`p-2 rounded-md hover:bg-gray-100 ${activeMapLayer === 'streets' ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+      title="Streets View"
+    >
+      <LayersIcon className="w-5 h-5" />
+    </button>
+    <button
+      onClick={() => onSetMapLayer('hybrid')}
+      className={`p-2 rounded-md hover:bg-gray-100 ${activeMapLayer === 'hybrid' ? 'bg-blue-100 text-blue-600' : 'text-gray-600'}`}
+      title="Hybrid View"
+    >
+      <SatelliteIcon className="w-5 h-5" />
+    </button>
+    <button
+      onClick={onZoomToFit}
+      className="p-2 rounded-md hover:bg-gray-100 text-gray-600"
+      title="Zoom to Fit All Devices"
+    >
+      <ExpandIcon className="w-5 h-5" />
+    </button>
+  </div>
+);
 
 export default MapControls;
