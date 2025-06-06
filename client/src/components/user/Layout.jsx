@@ -12,7 +12,7 @@ import { CSVLink } from 'react-csv';
 import io from 'socket.io-client';
 
 const MAX_ALERTS_IN_DROPDOWN = 7;
-const socket = io('http://localhost:5000'); // Use backend port
+const socket = io(`${import.meta.env.VITE_API_URL}`); // Use backend port
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ const Layout = () => {
 
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/user/profile', { // Correct endpoint
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/profile`, { // Correct endpoint
           headers: { Authorization: `Bearer ${token}` }
         });
         setUsername(response.data.username || 'Demo User');

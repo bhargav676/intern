@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 app.set('io', io);
 
-// Debug imports
+
 console.log('userRoutes type:', typeof userRoutes);
 console.log('adminRoutes type:', typeof adminRoutes);
 
@@ -29,7 +29,7 @@ console.log('adminRoutes type:', typeof adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Socket.io
+
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   socket.on('disconnect', () => {
@@ -37,10 +37,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// Connect to MongoDB
+
 connectDB();
 
-// Start server
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

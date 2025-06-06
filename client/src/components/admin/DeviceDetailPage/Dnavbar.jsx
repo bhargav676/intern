@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { User, Bell } from 'lucide-react';
+import { User, Bell, Menu } from 'lucide-react';
 import { FaDroplet } from "react-icons/fa6";
-import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
-const Navbar = () => {
+const DNavbar = () => {
   const navigate = useNavigate();
   const { deviceId: paramDeviceId } = useParams();
   const { state } = useLocation();
   const deviceId = paramDeviceId || state?.deviceId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userDetails, setUserDetails] = useState({ username: 'Loading...', email: '', role: '' });
   const [error, setError] = useState(null);
 
@@ -21,7 +21,6 @@ const Navbar = () => {
       setError('No token found');
       return;
     }
-
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       setUserDetails({
@@ -49,11 +48,13 @@ const Navbar = () => {
   const navigateTo = (path) => {
     if (deviceId) {
       navigate(`/admin/device-detail/${deviceId}/${path}`, { state: { deviceId } });
+      setIsMobileMenuOpen(false);
     }
   };
 
   const handleDashboardClick = () => {
     navigate('/admin');
+    setIsMobileMenuOpen(false);
   };
 
   if (error) {
@@ -69,52 +70,53 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-4 left-4 right-4 bg-black/70 backdrop-blur-md text-white px-4 py-3 rounded-lg flex justify-between items-center z-50">
+      {/* Left: Logo and App Name */}
       <div className="flex items-center gap-4">
-        <div className="p-2 rounded-md">
-          <FaDroplet className="w-8 h-8 text-blue-800"/>
-        </div>
-        <h1 className="text-xl font-semibold">AquaMonitor</h1>
+        <button
+          className="hidden md:block p-2 rounded-md"
+          aria-label="Logo"
+        >
+          <FaDroplet className="w-8 h-8 text-cyan-500"/>
+        </button>
+        <span className="block md:hidden p-2 rounded-md">
+          <FaDroplet className="w-8 h-8 text-cyan-500"/>
+        </span>
+        <h1 className="text-xl font-semibold">Jala Rakshak</h1>
       </div>
-      <div className="flex items-center gap-6">
+
+      {/* Desktop Menu */}
+      <div className="hidden md:flex items-center gap-6">
         <span 
           onClick={() => navigateTo('')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Device Details
         </span>
         <span 
           onClick={() => navigateTo('records')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Records
         </span>
         <span 
           onClick={() => navigateTo('download-csv')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           Download
         </span>
         <span 
-          onClick={() => navigateTo('realtime')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          Realtime
-        </span>
-        <span 
-          onClick={() => navigateTo('more-details')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          More Details
-        </span>
-        <span 
           onClick={handleDashboardClick}
-          className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full flex items-center gap-1"
+          className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full flex items-center gap-1"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
           </svg>
           Dashboard
         </span>
+      </div>
+
+      {/* Right: Notification, Profile, Hamburger */}
+      <div className="flex items-center gap-2 md:gap-6">
         <button
           onClick={() => {}}
           className="p-2 hover:bg-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
@@ -137,16 +139,75 @@ const Navbar = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-red-600 rounded-b-md transition-colors duration-300"
+                className="w-full text-left px-4 py-2 text-sm hover:bg-red-600 rounded-b-md transition-colors duration-200"
               >
                 Logout
               </button>
             </div>
           )}
         </div>
+        {/* Hamburger only on mobile */}
+        <button
+          className="md:hidden p-2 rounded-md ml-2"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Open menu"
+        >
+          <Menu className="w-7 h-7" />
+        </button>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Black overlay (closes menu on click) */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-60 z-50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          {/* Mobile popup menu */}
+          <div className="fixed top-0 right-0 h-full w-2/3 max-w-xs bg-black/95 z-60 flex flex-col p-6 shadow-lg transition-transform duration-300">
+            <button
+              className="self-end p-2 mb-4 text-2xl text-white"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+            <div className='ml-5 w-2/2 bg-black/95 h-[500px] p-6 flex flex-col gap-6 shadow-lg'>
+            <span className="text-lg font-semibold mb-2 hover:bg-cyan-500 px-3 py-2 rounded transition cursor-pointer">Menu</span>
+            <span
+              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => navigateTo('')}
+            >
+              Device Details
+            </span>
+            <span
+              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => navigateTo('records')}
+            >
+              Records
+            </span>
+            <span
+              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => navigateTo('download-csv')}
+            >
+              Download
+            </span>
+            <span 
+              className="text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition flex items-center gap-1"
+              onClick={handleDashboardClick}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              Dashboard
+            </span>
+            </div>
+          </div>
+        </>
+      )}
     </nav>
   );
 };
 
-export default Navbar;
+export default DNavbar;

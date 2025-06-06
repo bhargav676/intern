@@ -1,27 +1,23 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DeviceListPanel from '../../components/DeviceListPanel';
 
-const Devices = () => {
-  const [devices, setDevices] = useState([]);
-  const [selectedDevice, setSelectedDevice] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+const Devices = () => {                                   
+  const [devices, setDevices] = useState([]);                                
+  const [selectedDevice, setSelectedDevice] = useState(null);                                  
+  const [searchTerm, setSearchTerm] = useState('');                               
+  const [isLoading, setIsLoading] = useState(true);                              
+  const [error, setError] = useState(null);                           
+                                                            
   useEffect(() => {
     const fetchDevices = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await axios.get('http://192.168.68.109:5000/api/devices', {
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/devices`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, 
         });
-        console.log('API Response:', response.data); // Debug
+        console.log('API Response:', response.data);
         setDevices(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         console.error('Fetch Error:', err);

@@ -11,6 +11,9 @@ import DeviceDetailsPage from './components/admin/DeviceDetailPage/DeviceDetails
 import Records from './components/admin/DeviceDetailPage/Records';
 import Download from './components/admin/DeviceDetailPage/Download';
 import MoreDetails from './components/admin/DeviceDetailPage/MoreDetails';
+import Realtime from './components/admin/DeviceDetailPage/Realtime';
+import IntroPage from './components/Intro';
+import IoTGatewayHealthPage from './components/admin/DeviceDetailPage/IoTGatewayHealthPage';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const token = localStorage.getItem('token');
@@ -46,21 +49,26 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path='/login' element={<Login />} />
+        {/* Public Routes */}
+        <Route path="/" element={<IntroPage />} />
+        <Route path="/login" element={<Login />} />
+
         {/* Admin Routes */}
-        <Route path='/admin' element={<ProtectedRoute requireAdmin={true}><AdminDashboard /></ProtectedRoute>} />
-        <Route path='/adduser' element={<ProtectedRoute requireAdmin={true}><AddUserWrapper /></ProtectedRoute>} />
-        <Route path='/deleteuser' element={<ProtectedRoute requireAdmin={true}><DeleteUser /></ProtectedRoute>} />
-        <Route path='/device-detail/:deviceId' element={<ProtectedRoute requireAdmin={true}><DeviceDetailsPage /></ProtectedRoute>} />
-         <Route path='/admin/device-detail/:deviceId' element={<ProtectedRoute requireAdmin={true}><DeviceDetailsPage /></ProtectedRoute>} />
-        <Route path='/admin/device-detail/:deviceId/records' element={<ProtectedRoute requireAdmin={true}><Records /></ProtectedRoute>} />
-        <Route path='/admin/device-detail/:deviceId/download-csv' element={<ProtectedRoute requireAdmin={true}><Download /></ProtectedRoute>} />
-        <Route path='/admin/device-detail/:deviceId/more-details' element={<ProtectedRoute requireAdmin={true}><MoreDetails /></ProtectedRoute>} />
-        {/* User Routes */} 
-        <Route element={<ProtectedRoute requireAdmin={false}> <Layout /> </ProtectedRoute>}>
-          <Route path='/dashboard' element={<DashboardHomePage />} />
-          <Route path='/dashboard/alerts' element={<Alerts />} />
-          <Route path='/' element={<Navigate to='/dashboard' replace />} />
+        <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/adduser" element={<ProtectedRoute requireAdmin={true}><AddUserWrapper /></ProtectedRoute>} />
+        <Route path="/deleteuser" element={<ProtectedRoute requireAdmin={true}><DeleteUser /></ProtectedRoute>} />
+        <Route path="/device-detail/:deviceId" element={<ProtectedRoute requireAdmin={true}><DeviceDetailsPage /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId" element={<ProtectedRoute requireAdmin={true}><DeviceDetailsPage /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId/records" element={<ProtectedRoute requireAdmin={true}><Records /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId/download-csv" element={<ProtectedRoute requireAdmin={true}><Download /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId/realtime" element={<ProtectedRoute requireAdmin={true}><Realtime /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId/more-details" element={<ProtectedRoute requireAdmin={true}><MoreDetails /></ProtectedRoute>} />
+        <Route path="/admin/device-detail/:deviceId/health" element={<ProtectedRoute requireAdmin={true}><IoTGatewayHealthPage /></ProtectedRoute>} />
+
+        {/* User Routes */}
+        <Route element={<ProtectedRoute requireAdmin={false}><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardHomePage />} />
+          <Route path="/dashboard/alerts" element={<Alerts />} />
         </Route>
       </Routes>
     </Router>

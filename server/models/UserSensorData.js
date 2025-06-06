@@ -1,3 +1,4 @@
+// models/UserSensorData.js
 const mongoose = require('mongoose');
 
 const sensorDataSchema = new mongoose.Schema({
@@ -6,25 +7,41 @@ const sensorDataSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  deviceId: {
+    type: String,
+    required: true,
+  },
   ph: {
     type: Number,
-    required: true,
+    default: null,
   },
   turbidity: {
     type: Number,
-    required: true,
+    default: null,
   },
   tds: {
     type: Number,
-    required: true,
+    default: null,
   },
   latitude: {
     type: Number,
-    required: true,
+    default: null,
   },
   longitude: {
     type: Number,
-    required: true,
+    default: null,
+  },
+  temperature: {
+    type: Number, // °C
+    default: null,
+  },
+  battery: {
+    type: Number, // % (0-100)
+    default: null,
+  },
+   capacity: {
+    type: Number, // % (0-100)
+    default: null,
   },
   timestamp: {
     type: Date,

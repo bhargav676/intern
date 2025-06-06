@@ -7,9 +7,9 @@ exports.getDevices = async (req, res) => {
     res.json(devices);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
-  }
+  } 
 };
-
+ 
 exports.getSensorData = async (req, res) => {
   try {
     const { deviceId } = req.params;  
@@ -19,3 +19,4 @@ exports.getSensorData = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+

@@ -11,15 +11,13 @@ import MapViewController from './MapViewController';
 import DeviceMarker from './DeviceMarker';
 import 'leaflet/dist/leaflet.css';
 
-const MAPTILER_API_KEY = '7mouERLf0uvhtKp0E7Xz';
-const API_BASE_URL = 'http://localhost:5000/api';
-const socket = io('http://localhost:5000');
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const socket = io(`${import.meta.env.VITE_API_URL}`);
 
-// Set up axios interceptor to handle 401 errors
 axios.interceptors.response.use(
   response => response,
   error => {
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status === 401) {  
       if (error.config.url.includes('/user/profile') || error.config.url.includes('/user/add-user')) {
         return Promise.reject(error);
       }
@@ -32,37 +30,44 @@ axios.interceptors.response.use(
 );
 
 const MAP_LAYERS = {
-  hybrid: {
-    name: 'Hybrid',
-    url: `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_API_KEY}`,
-    attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+  satellite: {
+    name: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles © <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">Esri</a>, Source: Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
   },
   streets: {
     name: 'Streets',
-    url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}`,
-    attribution: '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles © <a href="https://www.arcgis.com/home/item.html?id=3b93337983e9436f8db950e38a8629af">Esri</a>, Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
   }
 };
 
-const INDIA_INITIAL_BOUNDS = [[8.5546079, 70.1113787], [34.6745457, 97.395561]];
+const INDIA_INITIAL_BOUNDS = [[9.5546079, 60.1113787], [34.6745457, 97.395561]];
 const DEVICE_ZOOM_LEVEL = 14;
+
+function isMobileScreen() {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth < 768;
+  }
+  return false;
+}
 
 const AdminDashboard = () => {
   const [devices, setDevices] = useState([]);
+  const [isDeviceListOpen, setIsDeviceListOpen] = useState(() => !isMobileScreen());
   const [userSensors, setUserSensors] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [sensorData, setSensorData] = useState(null);
   const [isLoading, setIsLoading] = useState({ devices: true, sensorData: false });
   const [mapView, setMapView] = useState({ bounds: INDIA_INITIAL_BOUNDS });
-  const [activeMapLayer, setActiveMapLayer] = useState('hybrid');
-  const [isDeviceListOpen, setIsDeviceListOpen] = useState(true); // Set to true by default
+  const [activeMapLayer, setActiveMapLayer] = useState('satellite');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
 
   const mapRef = useRef();
   const navigate = useNavigate();
 
-  // Check token expiration on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -109,27 +114,41 @@ const AdminDashboard = () => {
   const fetchUserDevices = useCallback(async () => {
     setIsLoading(prev => ({ ...prev, devices: true }));
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/user-sensor-data`, {
+      
+      const devicesResponse = await axios.get(`${API_BASE_URL}/admin/devices`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      const grouped = response.data.reduce((acc, data) => {
-        const key = data.userId._id;
-        if (!acc[key]) {
-          const status = data.ph > 8.5 || data.ph < 6.5 || data.turbidity > 25 || data.tds > 1000 ? 'alert' :
-                         (data.ph >= 6.0 && data.ph <= 9.0 && data.turbidity <= 25 && data.tds <= 1000) ? 'active' : 'warning';
-          acc[key] = {
-            deviceId: `user-${key}`,
-            userId: key,
-            name: data.userId.username || `User-${key}`,
-            location: { coordinates: [data.longitude, data.latitude] },
-            latestData: data,
-            status,
-            type: 'user'
-          };
+      const deviceData = Array.isArray(devicesResponse.data) ? devicesResponse.data : [];
+      
+      
+      const userSensorsData = [];
+      for (const device of deviceData) {
+        try {
+          const sensorResponse = await axios.get(`${API_BASE_URL}/admin/user-sensor-data/${device.userId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          const latestData = Array.isArray(sensorResponse.data) && sensorResponse.data.length > 0 
+            ? sensorResponse.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+            : null;
+          
+          if (latestData) {
+            const status = latestData.ph > 8.5 || latestData.ph < 6.5 || latestData.turbidity > 25 || latestData.tds > 1000 ? 'alert' :
+                          (latestData.ph >= 6.0 && latestData.ph <= 9.0 && latestData.turbidity <= 25 && latestData.tds <= 1000) ? 'active' : 'warning';
+            userSensorsData.push({
+              deviceId: device.deviceId,
+              userId: device.userId,
+              name: device.name,
+              location: device.location,
+              latestData,
+              status,
+              type: 'user'
+            });
+          }
+        } catch (sensorError) {
+          console.error(`Error fetching sensor data for user ${device.userId}:`, sensorError);
         }
-        return acc;
-      }, {});
-      setUserSensors(Object.values(grouped));
+      }
+      setUserSensors(userSensorsData);
     } catch (error) {
       console.error('Error fetching user sensor data:', error);
       setUserSensors([]);
@@ -148,7 +167,7 @@ const AdminDashboard = () => {
         const status = data.ph > 8.5 || data.ph < 6.5 || data.turbidity > 25 || data.tds > 1000 ? 'alert' :
                        (data.ph >= 6.0 && data.ph <= 9.0 && data.turbidity <= 25 && data.tds <= 1000) ? 'active' : 'warning';
         if (existing) {
-          return prev.map((d) =>
+          return prev.map((d) => 
             d.userId === data.userId._id
               ? { ...d, location: { coordinates: [data.longitude, data.latitude] }, latestData: data, status }
               : d
@@ -180,17 +199,20 @@ const AdminDashboard = () => {
       center: [device.location.coordinates[1], device.location.coordinates[0]],
       zoom: DEVICE_ZOOM_LEVEL
     });
-    setIsDeviceListOpen(false); // Still closes the panel when a device is clicked
+    setIsDeviceListOpen(false);
     try {
       let response;
       if (device.type === 'admin') {
-        response = await axios.get(`${API_BASE_URL}/admin/devices/${device.deviceId}`, {
+        
+        response = await axios.get(`${API_BASE_URL}/admin/user-sensor-data/${device.userId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } else {
         response = { data: device.latestData };
       }
-      setSensorData(response.data && (response.data.length > 0 ? response.data[0] : response.data));
+      setSensorData(Array.isArray(response.data) && response.data.length > 0 
+        ? response.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+        : response.data);
     } catch (error) {
       console.error('Error fetching sensor data:', error);
       setSensorData(null);
@@ -243,7 +265,6 @@ const AdminDashboard = () => {
     device.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handler for the "Devices" link (optional toggle, can be removed if panel should never close)
   const handleToggleDeviceList = () => {
     setIsDeviceListOpen(prev => !prev);
   };
@@ -260,20 +281,22 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Navbar onToggleDeviceList={handleToggleDeviceList} />
-      <main className="flex-1 flex relative bg-transparent">
-        <DeviceListPanel // Always render the panel
-          isOpen={isDeviceListOpen}
-          devices={filteredDevices}
-          selectedDevice={selectedDevice}
-          onDeviceClick={handleMarkerClick}
-          searchTerm={searchTerm}
-          onSearch={(e) => setSearchTerm(e.target.value)}
-          isLoading={isLoading.devices}
-          isMobile={true}
-          onClose={() => setIsDeviceListOpen(false)} // Still allows closing via the panel's close button
-        />
+      <div className="h-screen flex flex-col overflow-hidden">
+    <Navbar
+  onToggleSidebar={handleToggleDeviceList}
+  onOpenDevicePanel={() => setIsDeviceListOpen(true)}
+/>
+    <main className="flex-1 flex relative bg-transparent">
+      <DeviceListPanel
+        isOpen={isDeviceListOpen}
+        devices={filteredDevices}
+        selectedDevice={selectedDevice}
+        onDeviceClick={handleMarkerClick}
+        searchTerm={searchTerm}
+        onSearch={(e) => setSearchTerm(e.target.value)}
+        isLoading={isLoading.devices}
+        onClose={() => setIsDeviceListOpen(false)}
+      />
         <section className="flex-1 h-full relative z-0">
           <MapContainer
             ref={mapRef}

@@ -4,11 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const UserSensorData = require('../models/UserSensorData');
+const Device = require('../models/Device');
 const authMiddleware = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
 const { v4: uuidv4 } = require('uuid');
 
-const adminMiddleware = (req, res, next) => {
+
+const adminMiddleware = (req, res, next) => { 
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Admins only' });
   }
@@ -96,51 +98,90 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error: Unable to login' });
   }
 });
-
 router.post('/sensor', async (req, res) => {
   try {
-    const { ph, turbidity, tds, latitude, longitude, accessId } = req.body;
-    if (!ph || !turbidity || !tds || !latitude || !longitude || !accessId) {
-      return res.status(400).json({ message: 'All fields are required' });
+    const { ph, turbidity, tds, latitude, longitude, accessId, deviceId, temperature, battery,capacity } = req.body;
+
+    // Validate accessId
+    if (!accessId) {
+      return res.status(400).json({ message: 'accessId is required' });
     }
 
+    // Find user by accessId
     const user = await User.findOne({ accessId });
     if (!user) {
       return res.status(401).json({ message: 'Invalid access ID' });
     }
 
-    console.log('Received sensor data:', {
+    console.log('Received data:', {
       userId: user._id,
-      ph,
-      turbidity,
-      tds,
-      latitude,
-      longitude,
-    });
-
-    const sensorData = new UserSensorData({
-      userId: user._id,
-      ph,
-      turbidity,
-      tds,
-      latitude,
-      longitude,
-    });
-    await sensorData.save();
-
-    const io = req.app.get('io');
-    const sensorDataPayload = {
-      userId: user._id.toString(),
+      deviceId: deviceId || user.username,
       username: user.username,
       ph,
       turbidity,
       tds,
       latitude,
       longitude,
+      temperature,
+      battery,
+      capacity,
+    });
+
+   
+    const sensorData = new UserSensorData({
+      userId: user._id,
+      deviceId: deviceId || user.username,
+      ph: ph != null ? ph : null,
+      turbidity: turbidity != null ? turbidity : null,
+      tds: tds != null ? tds : null,
+      latitude: latitude != null ? latitude : null,
+      longitude: longitude != null ? longitude : null,
+      temperature: temperature != null ? temperature : null,
+      battery: battery != null ? battery : null,
+      capacity: capacity != null ? capacity : null,
+    });
+    await sensorData.save();
+
+    // Update or insert device
+    await Device.updateOne(
+      { deviceId: deviceId || user.username },
+      {
+        $set: {
+          deviceId: deviceId || user.username,
+          name: user.username,
+          userId: user._id,
+          location: {
+            type: 'Point',
+            coordinates: [longitude != null ? longitude : 0, latitude != null ? latitude : 0],
+          },
+          lastActive: new Date(),
+          temperature: temperature != null ? temperature : null,
+          battery: battery != null ? battery : null,
+          capacity: capacity != null ? capacity : null,
+        },
+      },
+      { upsert: true }
+    );
+
+    // Prepare Socket.IO payload
+    const io = req.app.get('io');
+    const sensorDataPayload = {
+      userId: user._id.toString(),
+      deviceId: deviceId || user.username,
+      username: user.username,
+      ph: ph != null ? ph : null,
+      turbidity: turbidity != null ? turbidity : null,
+      tds: tds != null ? tds : null,
+      latitude: latitude != null ? latitude : null,
+      longitude: longitude != null ? longitude : null,
+      temperature: temperature != null ? temperature : null,
+      battery: battery != null ? battery : null,
+      capacity:  capacity!= null ?  capacity: null,
       timestamp: sensorData.timestamp,
     };
 
-    if (ph > 8.0) {
+    // pH alert
+    if (ph != null && (ph > 8.5 || ph < 6.5)) {
       sensorDataPayload.alert = `High pH level detected: ${ph}`;
       sendEmail(
         user.email,
@@ -151,13 +192,12 @@ router.post('/sensor', async (req, res) => {
       });
     }
 
-    io.emit('newSensorData', sensorDataPayload);
-    io.emit('newUserSensorData', sensorDataPayload);
+    io.emit('sensorDataUpdate', sensorDataPayload);
 
     res.status(200).json({ message: 'Sensor data saved successfully' });
   } catch (err) {
     console.error('Error saving sensor data:', err);
-    res.status(500).json({ message: 'Server error: Unable to save sensor data' });
+    res.status(500).json({ message: 'Server error: Unable to save sensor data', details: err.message });
   }
 });
 
@@ -199,8 +239,10 @@ router.delete('/delete/:id', authMiddleware, adminMiddleware, async (req, res) =
 
     const { username, email } = user;
 
+    // Delete user, sensor data, and devices
     await User.findByIdAndDelete(userIdToDelete);
     await UserSensorData.deleteMany({ userId: userIdToDelete });
+    await Device.deleteMany({ userId: userIdToDelete });
 
     await sendEmail(
       email,
@@ -210,14 +252,13 @@ router.delete('/delete/:id', authMiddleware, adminMiddleware, async (req, res) =
       console.error(`Failed to send deletion email to ${email}:`, emailErr.message);
     });
 
-    res.status(200).json({ message: 'User and associated data deleted successfully' });
+    res.status(200).json({ message: 'User, sensor data, and devices deleted successfully' });
   } catch (err) {
     console.error('Error deleting user:', err);
     res.status(500).json({ message: 'Server error: Unable to delete user' });
   }
 });
 
-// Fixed GET route to fetch all users (for admins only)
 router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const users = await User.find().select('username email role accessId');
@@ -225,7 +266,8 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error fetching users:', err);
     res.status(500).json({ message: 'Server error: Unable to fetch users' });
-  }
+  } 
 });
+
 
 module.exports = router;

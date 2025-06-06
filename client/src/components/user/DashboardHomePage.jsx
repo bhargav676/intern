@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import 'leaflet/dist/leaflet.css'; 
 import L from 'leaflet';
 import { Line } from 'react-chartjs-2';
 import {
@@ -14,22 +14,22 @@ import {
 import { FaVial, FaSmog, FaTint } from 'react-icons/fa';
 
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
+L.Icon.Default.mergeOptions({ 
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png', 
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-}); 
+});
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-const socket = io('http://localhost:5000', { // Use backend port
+const socket = io(`${import.meta.env.VITE_API_URL}`, {
   reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000,
 });
 
 const InvalidateMapSize = () => {
   const map = useMap();
   useEffect(() => {
-    if (map) { 
+    if (map) {
       map.invalidateSize();
       const timer = setTimeout(() => map.invalidateSize(), 150);
       return () => clearTimeout(timer);
@@ -64,7 +64,7 @@ const DashboardHomePage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/user/sensor/data', { // Correct endpoint
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/sensor/data`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const fetchedData = response.data || [];
@@ -103,10 +103,10 @@ const DashboardHomePage = () => {
         console.error('Error processing token or new sensor data:', error);
       }
     };
-    socket.on('newSensorData', handleNewSensorData);
+    socket.on('sensorDataUpdate', handleNewSensorData);
 
     return () => {
-      socket.off('newSensorData', handleNewSensorData);
+      socket.off('sensorDataUpdate', handleNewSensorData);
       socket.off('connect');
       socket.off('disconnect');
     };
@@ -159,85 +159,163 @@ const DashboardHomePage = () => {
 
   const chartOptions = useMemo(() => ({
     responsive: true, maintainAspectRatio: false,
-    layout: { padding: { left: 20, right: 15, top: 5, bottom: 5 } },
+    layout: { padding: { left: 20, right: 15, top: 10, bottom: 10 } },
     scales: {
-      x: { grid: { display: false }, ticks: { color: isDarkMode ? '#94A3B8' : '#64748B', font: { size: 10 } } },
-      y: { grid: { color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)', drawBorder: false }, ticks: { color: isDarkMode ? '#94A3B8' : '#64748B', font: { size: 10 }, padding: 8 }, suggestedMin: 0 }
+      x: { 
+        grid: { display: false }, 
+        ticks: { color: isDarkMode ? '#A5B4FC' : '#475569', font: { size: 12 } } 
+      },
+      y: { 
+        grid: { color: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)', drawBorder: false }, 
+        ticks: { color: isDarkMode ? '#A5B4FC' : '#475569', font: { size: 12 }, padding: 10 }, 
+        suggestedMin: 0 
+      }
     },
     plugins: {
       legend: { display: false },
-      tooltip: { backgroundColor: isDarkMode ? 'rgba(30,41,59,0.9)' : 'rgba(255,255,255,0.95)', titleColor: isDarkMode ? '#E2E8F0' : '#1E293B', bodyColor: isDarkMode ? '#CBD5E1' : '#334155', borderColor: isDarkMode ? '#475569' : '#CBD5E1', borderWidth: 1, padding: 10, cornerRadius: 6, usePointStyle: true }
+      tooltip: { 
+        backgroundColor: isDarkMode ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.98)', 
+        titleColor: isDarkMode ? '#E2E8F0' : '#1E293B', 
+        bodyColor: isDarkMode ? '#CBD5E1' : '#334155', 
+        borderColor: isDarkMode ? '#64748B' : '#D1D5DB', 
+        borderWidth: 1, 
+        padding: 12, 
+        cornerRadius: 8, 
+        usePointStyle: true 
+      }
     },
-    elements: { line: { tension: 0.4, borderWidth: 2.5 }, point: { radius: 0, hoverRadius: 5, hitRadius: 15 } }
+    elements: { 
+      line: { tension: 0.4, borderWidth: 3 }, 
+      point: { radius: 0, hoverRadius: 6, hitRadius: 15 } 
+    }
   }), [isDarkMode]);
 
-  const phChartData = { labels: chartLabels, datasets: [{ label: 'pH', data: chartDataPoints.map((d) => d.ph), borderColor: '#2DD4BF', backgroundColor: 'rgba(45,212,191,0.35)', fill: true, pointBackgroundColor: '#2DD4BF', pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF', pointHoverBackgroundColor: '#2DD4BF', pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF',}]};
-  const turbidityChartData = { labels: chartLabels, datasets: [{ label: 'Turbidity', data: chartDataPoints.map((d) => d.turbidity), borderColor: '#A78BFA', backgroundColor: 'rgba(167,139,250,0.35)', fill: true, pointBackgroundColor: '#A78BFA', pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF', pointHoverBackgroundColor: '#A78BFA', pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF',}]};
-  const tdsChartData = { labels: chartLabels, datasets: [{ label: 'TDS', data: chartDataPoints.map((d) => d.tds), borderColor: '#4ADE80', backgroundColor: 'rgba(74,222,128,0.35)', fill: true, pointBackgroundColor: '#4ADE80', pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF', pointHoverBackgroundColor: '#4ADE80', pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF',}]};
+  const phChartData = { 
+    labels: chartLabels, 
+    datasets: [{ 
+      label: 'pH', 
+      data: chartDataPoints.map((d) => d.ph), 
+      borderColor: '#00BCD4', 
+      backgroundColor: 'rgba(0,188,212,0.2)', 
+      fill: true, 
+      pointBackgroundColor: '#00BCD4', 
+      pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF', 
+      pointHoverBackgroundColor: '#00BCD4', 
+      pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF', 
+    }] 
+  };
+  const turbidityChartData = { 
+    labels: chartLabels, 
+    datasets: [{ 
+      label: 'Turbidity', 
+      data: chartDataPoints.map((d) => d.turbidity), 
+      borderColor: '#00BCD4', 
+      backgroundColor: 'rgba(0,188,212,0.2)', 
+      fill: true, 
+      pointBackgroundColor: '#00BCD4', 
+      pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF',  
+      pointHoverBackgroundColor: '#00BCD4', 
+      pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF', 
+    }] 
+  }; 
+  const tdsChartData = { 
+    labels: chartLabels, 
+    datasets: [{ 
+      label: 'TDS', 
+      data: chartDataPoints.map((d) => d.tds), 
+      borderColor: '#00BCD4', 
+      backgroundColor: 'rgba(0,188,212,0.2)', 
+      fill: true, 
+      pointBackgroundColor: '#00BCD4', 
+      pointBorderColor: isDarkMode ? '#1E293B' : '#FFFFFF', 
+      pointHoverBackgroundColor: '#00BCD4', 
+      pointHoverBorderColor: isDarkMode ? '#0F172A' : '#FFFFFF', 
+    }] 
+  };
 
-  const getPhAlertStyle = (ph) => { const base = `rounded-lg shadow-md p-4 flex items-center`; if (ph === null || ph === undefined) return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; if (ph < 6.5 || ph > 7.5) return `${base} ${isDarkMode ? 'bg-red-700/30 text-red-200' : 'bg-pink-100 text-red-700'}`; return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; };
-  const getTurbidityAlertStyle = (turbidity) => { const base = `rounded-lg shadow-md p-4 flex items-center`; if (turbidity === null || turbidity === undefined) return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; if (turbidity > 2.5) return `${base} ${isDarkMode ? 'bg-yellow-600/30 text-yellow-200' : 'bg-yellow-100 text-yellow-700'}`; return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; };
-  const getTdsAlertStyle = (tds) => { const base = `rounded-lg shadow-md p-4 flex items-center`; if (tds === null || tds === undefined) return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; if (tds > 350 || tds < 150) return `${base} ${isDarkMode ? 'bg-red-700/30 text-red-200' : 'bg-pink-100 text-red-700'}`; return `${base} ${isDarkMode ? 'bg-slate-700' : 'bg-white'}`; };
+  const getPhAlertStyle = (ph) => { 
+    const base = `rounded-xl shadow-lg p-5 flex items-center transition-all duration-300 hover:shadow-xl`; 
+    if (ph === null || ph === undefined) return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+    if (ph < 6.5 || ph > 8.5) return `${base} ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-50 text-red-800'}`; 
+    return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+  };
+  const getTurbidityAlertStyle = (turbidity) => { 
+    const base = `rounded-xl shadow-lg p-5 flex items-center transition-all duration-300 hover:shadow-xl`; 
+    if (turbidity === null || turbidity === undefined) return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+    if (turbidity > 2.5) return `${base} ${isDarkMode ? 'bg-yellow-900/20 text-yellow-300' : 'bg-yellow-50 text-yellow-800'}`; 
+    return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+  };
+  const getTdsAlertStyle = (tds) => { 
+    const base = `rounded-xl shadow-lg p-5 flex items-center transition-all duration-300 hover:shadow-xl`; 
+    if (tds === null || tds === undefined) return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+    if (tds > 350 || tds < 150) return `${base} ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-50 text-red-800'}`; 
+    return `${base} ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`; 
+  };
 
-  const phIconColor = latestData.ph !== null ? (latestData.ph < 6.5 || latestData.ph > 7.5 ? 'text-red-500' : 'text-sky-500') : 'text-slate-500';
-  const turbidityIconColor = latestData.turbidity !== null ? (latestData.turbidity > 2.5 ? 'text-yellow-500' : 'text-sky-500') : 'text-slate-500';
-  const tdsIconColor = latestData.tds !== null ? (latestData.tds < 150 || latestData.tds > 350 ? 'text-red-500' : 'text-sky-500') : 'text-slate-500';
+  const phIconColor = latestData.ph !== null ? (latestData.ph < 6.5 || latestData.ph > 8.5 ? 'text-red-500' : 'text-teal-500') : 'text-slate-500';
+  const turbidityIconColor = latestData.turbidity !== null ? (latestData.turbidity > 5 ? 'text-yellow-500' : 'text-teal-500') : 'text-slate-500';
+  const tdsIconColor = latestData.tds !== null ? (latestData.tds < 500 || latestData.tds > 2000 ? 'text-red-500' : 'text-teal-500') : 'text-slate-500';
+
+  const mapCenter = [
+    latestData?.latitude && !isNaN(latestData.latitude) ? latestData.latitude : 22.3511,
+    latestData?.longitude && !isNaN(latestData.longitude) ? latestData.longitude : 78.6677,
+  ];
 
   if (loading) {
     return (
-      <div className={`flex justify-center items-center h-[calc(100vh-10rem)]`}>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500'></div>
-        <span className={`ml-3 text-lg ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Loading Dashboard Data...</span>
+      <div className={`flex justify-center items-center h-[calc(100vh-10rem)] bg-gradient-to-br ${isDarkMode ? 'from-slate-900 to-slate-800' : 'from-gray-100 to-white'}`}>
+        <div className='animate-spin rounded-full h-16 w-16 border-t-4 border-teal-500'></div>
+        <span className={`ml-4 text-xl font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>Loading Dashboard...</span>
       </div>
     );
   }
 
   return (
-    <>
-      <div className='mb-6'>
-        <h1 className={`text-2xl font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{pageUsername}</h1>
-        <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-          Welcome to your water quality monitoring dashboard.
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className='mb-8'>
+        <h1 className={`text-3xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Welcome, {pageUsername}</h1>
+        <p className={`mt-2 text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+          Your water quality monitoring dashboard
         </p>
-        <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+        <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
           Last updated: {formatTimestamp(latestData.timestamp)}
         </p>
       </div>
 
-      <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Current Sensor Readings</h2>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+      <h2 className={`text-2xl font-semibold mb-6 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>Current Sensor Readings</h2>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10'>
         <div className={getPhAlertStyle(latestData.ph)}>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 shrink-0 ${ latestData.ph !== null ? (latestData.ph < 6.5 || latestData.ph > 7.5 ? (isDarkMode ? 'bg-red-500/20' : 'bg-red-200') : (isDarkMode ? 'bg-sky-500/20' : 'bg-sky-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
-            <FaVial className={`text-2xl ${phIconColor}`} />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mr-5 shrink-0 ${ latestData.ph !== null ? (latestData.ph < 6.5 || latestData.ph > 8.5 ? (isDarkMode ? 'bg-red-500/20' : 'bg-red-100') : (isDarkMode ? 'bg-teal-500/20' : 'bg-teal-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
+            <FaVial className={`text-3xl ${phIconColor}`} />
           </div>
           <div>
-            <h3 className='text-sm font-medium text-slate-500 dark:text-slate-400'>pH Level</h3>
-            <p className='text-2xl font-bold'>{latestData.ph !== null ? latestData.ph.toFixed(2) : 'N/A'}</p>
-            <p className='text-xs text-slate-400 dark:text-slate-500'>Normal range: 6.5 - 7.5</p>
+            <h3 className='text-base font-semibold text-slate-600 dark:text-slate-300'>pH Level</h3>
+            <p className='text-3xl font-bold'>{latestData.ph !== null ? latestData.ph.toFixed(2) : 'N/A'}</p>
+            <p className='text-sm text-slate-400 dark:text-slate-500'>Normal range: 6.5 - 8.5</p>
           </div>
         </div>
         <div className={getTurbidityAlertStyle(latestData.turbidity)}>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 shrink-0 ${ latestData.turbidity !== null ? (latestData.turbidity > 2.5 ? (isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-200') : (isDarkMode ? 'bg-sky-500/20' : 'bg-sky-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
-            <FaSmog className={`text-2xl ${turbidityIconColor}`} />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mr-5 shrink-0 ${ latestData.turbidity !== null ? (latestData.turbidity > 5 ? (isDarkMode ? 'bg-yellow-500/20' : 'bg-yellow-100') : (isDarkMode ? 'bg-teal-500/20' : 'bg-teal-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
+            <FaSmog className={`text-3xl ${turbidityIconColor}`} />
           </div>
           <div>
-            <h3 className='text-sm font-medium text-slate-500 dark:text-slate-400'>Turbidity</h3>
-            <p className='text-2xl font-bold'>
-              {latestData.turbidity !== null ? latestData.turbidity.toFixed(2) : 'N/A'} <span className='text-sm'>NTU</span>
+            <h3 className='text-base font-semibold text-slate-600 dark:text-slate-300'>Turbidity</h3>
+            <p className='text-3xl font-bold'>
+              {latestData.turbidity !== null ? latestData.turbidity.toFixed(2) : 'N/A'} <span className='text-base'>NTU</span>
             </p>
-            <p className='text-xs text-slate-400 dark:text-slate-500'>Normal range: 0 - 2.5 NTU</p>
+            <p className='text-sm text-slate-400 dark:text-slate-500'>Normal range: 1 - 5 NTU</p>
           </div>
         </div>
         <div className={getTdsAlertStyle(latestData.tds)}>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 shrink-0 ${ latestData.tds !== null ? (latestData.tds < 150 || latestData.tds > 350 ? (isDarkMode ? 'bg-red-500/20' : 'bg-red-200') : (isDarkMode ? 'bg-sky-500/20' : 'bg-sky-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
-            <FaTint className={`text-2xl ${tdsIconColor}`} />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mr-5 shrink-0 ${ latestData.tds !== null ? (latestData.tds < 500 || latestData.tds > 2000 ? (isDarkMode ? 'bg-red-500/20' : 'bg-red-100') : (isDarkMode ? 'bg-teal-500/20' : 'bg-teal-100')) : (isDarkMode ? 'bg-slate-600' : 'bg-slate-200')}`}>
+            <FaTint className={`text-3xl ${tdsIconColor}`} />
           </div>
           <div>
-            <h3 className='text-sm font-medium text-slate-500 dark:text-slate-400'>Total Dissolved Solids</h3>
-            <p className='text-2xl font-bold'>
-              {latestData.tds !== null ? latestData.tds.toFixed(2) : 'N/A'} <span className='text-sm'>ppm</span>
+            <h3 className='text-base font-semibold text-slate-600 dark:text-slate-300'>Total Dissolved Solids</h3>
+            <p className='text-3xl font-bold'>
+              {latestData.tds !== null ? latestData.tds.toFixed(2) : 'N/A'} <span className='text-base'>MG/L</span>
             </p>
-            <p className='text-xs text-slate-400 dark:text-slate-500'>Normal range: 150 - 350 ppm</p>
+            <p className='text-sm text-slate-400 dark:text-slate-500'>Normal range: 500 - 2000 MG/L</p>
           </div>
         </div>
       </div>
@@ -249,35 +327,36 @@ const DashboardHomePage = () => {
             { title: 'Turbidity - Last 24 Hours', data: turbidityChartData },
             { title: 'Total Dissolved Solids (TDS) - Last 24 Hours', data: tdsChartData },
           ].map((chart) => (
-            <div key={chart.title} className={`p-4 sm:p-5 rounded-lg shadow-md ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
-              <h3 className='text-md font-semibold mb-3 text-slate-700 dark:text-slate-200'>{chart.title}</h3>
+            <div key={chart.title} className={`p-5 sm:p-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+              <h3 className='text-lg font-semibold mb-4 text-slate-700 dark:text-slate-200'>{chart.title}</h3>
               {chartDataPoints.length > 0 ? (
-                <div className='h-64'>
+                <div className='h-72'>
                   <Line data={chart.data} options={chartOptions} />
                 </div>
               ) : (
-                <div className={`h-64 flex items-center justify-center rounded-md ${isDarkMode ? 'bg-slate-700/30' : 'bg-slate-100'}`}>
-                  <p className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Not enough data to display chart.</p>
+                <div className={`h-72 flex items-center justify-center rounded-lg ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+                  <p className={`text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Not enough data to display chart.</p>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className={`relative z-0 p-4 sm:p-5 rounded-lg shadow-md flex flex-col ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
-          <h3 className='text-md font-semibold text-slate-700 dark:text-slate-200'>Sensor Location</h3>
+        <div className={`relative z-0 p-5 sm:p-6 rounded-xl shadow-lg flex flex-col transition-all duration-300 hover:shadow-xl ${isDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+          <h3 className='text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3'>Sensor Location</h3>
           {latestData.latitude && latestData.longitude && (
-            <p className='text-xs text-slate-500 dark:text-slate-400 mb-2'>
+            <p className='text-sm text-slate-500 dark:text-slate-400 mb-3'>
               {latestData.latitude.toFixed(4)}, {latestData.longitude.toFixed(4)}
             </p>
           )}
-          <div className='flex-grow mt-1 rounded-md overflow-hidden min-h-[280px] lg:min-h-[300px]'>
-            {latestData.latitude && latestData.longitude ? (
+          <div className={`flex-grow rounded-lg overflow-hidden border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} min-h-[300px]`}>
+            {latestData.latitude && latestData.longitude && !isNaN(latestData.latitude) && !isNaN(latestData.longitude) ? (
               <MapContainer
-                center={[latestData.latitude, latestData.longitude]}
-                zoom={13} style={{ height: '100%', width: '100%' }}
+                center={mapCenter}
+                zoom={5}
+                style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={false}
-                key={`${latestData.latitude}-${latestData.longitude}-${isDarkMode}`}
+                key={`${mapCenter[0]}-${mapCenter[1]}-${isDarkMode}`}
               >
                 <TileLayer
                   url={isDarkMode ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
@@ -287,14 +366,14 @@ const DashboardHomePage = () => {
                 <InvalidateMapSize />
               </MapContainer>
             ) : (
-              <div className='h-full flex items-center justify-center rounded bg-gray-100 dark:bg-gray-700'>
-                <p className='text-slate-500 dark:text-slate-400'>Location data not available</p>
+              <div className='h-full flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700'>
+                <p className='text-base text-slate-500 dark:text-slate-400'>Location data not available</p>
               </div>
             )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

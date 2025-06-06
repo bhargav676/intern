@@ -3,18 +3,18 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import bg from '../../assets/images/bg3.jpeg'
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
 const Toast = ({ id, message, type, onClose }) => {
   useEffect(() => {
-    const timer = setTimeout(() => onClose(id), 3000); // Auto-dismiss after 3 seconds
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => onClose(id), 3000); 
+    return () => clearTimeout(timer); 
   }, [id, onClose]);
 
   return (
     <div
       className={`flex items-center p-4 mb-2 rounded-lg shadow-lg transition-transform transform translate-x-0 opacity-100 ${
-        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        type === 'success' ? 'bg-green-600' : 'bg-red-600 '
       } text-white text-sm`}
     >
       <span>{message}</span>
