@@ -14,7 +14,7 @@ const io = new Server(server, {
   cors: {
     origin: ['http://localhost:5173'],
     methods: ['GET', 'POST'],
-  },
+  }, 
 });
 
 app.use(cors());
@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
 connectDB();
 
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT,'0.0.0.0', () => {
+const PORT = process.env.PORT || 4000;
+server.listen(PORT,'0.0.0.0', () => { 
   console.log(`Server running on port ${PORT}`);
 });

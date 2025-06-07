@@ -10,8 +10,26 @@ const socket = io(`${import.meta.env.VITE_API_URL}`, {
   reconnectionDelay: 1000,
 });
 
+// Helper for online detection
+const isDeviceOnline = (device) => {
+  const timestamp =
+    device.latestData?.timestamp ||
+    device.lastSeen ||
+    device.timestamp ||
+    (device.sensorData && device.sensorData[0]?.timestamp);
+  if (!timestamp) return false;
+  try {
+    const time = new Date(timestamp).getTime();
+    return time > Date.now() - 5 * 60 * 1000;
+  } catch {
+    return false;
+  }
+};
+
 const DeviceItem = ({ device, selectedDevice, onDeviceClick, onClose }) => {
   const navigate = useNavigate();
+  const online = isDeviceOnline(device);
+
   const handleUserClick = () => {
     const deviceId = device.deviceId;
     if (!deviceId || !device.userId) return;
@@ -40,24 +58,17 @@ const DeviceItem = ({ device, selectedDevice, onDeviceClick, onClose }) => {
         </div>
         <p className="text-sm font-medium text-white truncate">{device.name}</p>
       </div>
+      {/* Online/offline dot */}
+      <div className="flex items-center justify-end ml-2">
+        <span
+          className={`inline-block w-3 h-3 rounded-full border-2 border-white ${
+            online ? 'bg-green-500' : 'bg-red-500'
+          }`}
+          title={online ? 'Online' : 'Offline'}
+        />
+      </div>
     </motion.div>
   );
-};
-
-// Helper for online detection
-const isDeviceOnline = (device) => {
-  const timestamp =
-    device.latestData?.timestamp ||
-    device.lastSeen ||
-    device.timestamp ||
-    (device.sensorData && device.sensorData[0]?.timestamp);
-  if (!timestamp) return false;
-  try {
-    const time = new Date(timestamp).getTime();
-    return time > Date.now() - 5 * 60 * 1000;
-  } catch {
-    return false;
-  }
 };
 
 const SidebarContent = ({
@@ -198,11 +209,21 @@ const DeviceListPanel = ({
 
   const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
 
-  const filteredDevices = deviceList.filter(
-    (device) =>
-      device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      device.deviceId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- Devices filtering and sorting (online first) ---
+  const filteredDevices = deviceList
+    .filter(
+      (device) =>
+        device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.deviceId.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Online devices first
+      const onlineA = isDeviceOnline(a);
+      const onlineB = isDeviceOnline(b);
+      if (onlineA === onlineB) return 0;
+      return onlineA ? -1 : 1;
+    });
+
   const onlineCount = filteredDevices.filter(isDeviceOnline).length;
   const offlineCount = filteredDevices.length - onlineCount;
 
