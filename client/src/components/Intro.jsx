@@ -9,11 +9,7 @@ import bg4 from '../assets/images/bg13.jpg';
 const TEXTS = ['Monitoring', 'System'];
 const BACKGROUNDS = [bg1, bg2, bg3, bg4];
 
-<<<<<<< HEAD
 const TYPING_SPEED = 100; 
-=======
-const TYPING_SPEED = 100;
->>>>>>> 2fa2f74e8322435b9d8f204bf2f34bf66665adce
 const DELETING_SPEED = 50;
 const DELAY_BETWEEN_WORDS = 1000;
 const IMAGE_CYCLE_SEC = 2000;
@@ -171,7 +167,7 @@ const IntroPage = () => {
           initial="initial"
           animate="animate"
           transition={{ delay: 0.6 }}
-        > 
+        >  
           Ensuring clean and safe water for all
         </motion.p>
         <motion.div
