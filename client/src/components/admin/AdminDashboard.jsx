@@ -203,7 +203,7 @@ const AdminDashboard = () => {
     try {
       let response;
       if (device.type === 'admin') {
-        
+        // Fetch sensor data for admin device using userId
         response = await axios.get(`${API_BASE_URL}/admin/user-sensor-data/${device.userId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });

@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import bg from '../assets/images/bg5.jpg'; 
+import bg1 from '../assets/images/bg5.jpg';
+import bg2 from '../assets/images/bg2.jpg';
+import bg3 from '../assets/images/bg3.jpg';
+import bg4 from '../assets/images/bg13.jpg';
 
 const IntroPage = () => {
   const navigate = useNavigate();
@@ -9,10 +12,32 @@ const IntroPage = () => {
   const [wordIndex, setWordIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hasInteracted, setHasInteracted] = useState(false); // New state for user interaction
   const audioRef = useRef(null);
 
   const textToType = ['Monitoring', 'System'];
+  const backgroundImages = [bg1, bg2, bg3, bg4];
 
+  // Detect user interaction
+  useEffect(() => {
+    const handleInteraction = () => {
+      setHasInteracted(true);
+      // Remove event listeners after first interaction
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+  }, []);
+
+  // Typing effect
   useEffect(() => {
     const currentWord = textToType[wordIndex];
     const typingSpeed = isDeleting ? 50 : 100;
@@ -21,16 +46,22 @@ const IntroPage = () => {
       if (!isDeleting && charIndex < currentWord.length) {
         setDisplayedText((prev) => prev + currentWord[charIndex]);
         setCharIndex((prev) => prev + 1);
-        // Play typing sound
-        if (audioRef.current) {
+        // Play typing sound only if user has interacted
+        if (hasInteracted && audioRef.current) {
           audioRef.current.currentTime = 0;
-          audioRef.current.play();
+          try {
+            audioRef.current.play().catch((error) => {
+              console.warn('Audio playback failed:', error);
+            });
+          } catch (error) {
+            console.warn('Audio playback error:', error);
+          }
         }
       } else if (isDeleting && charIndex > 0) {
         setDisplayedText((prev) => prev.slice(0, -1));
         setCharIndex((prev) => prev - 1);
       } else if (!isDeleting && charIndex === currentWord.length) {
-        setTimeout(() => setIsDeleting(true), 1000); // Pause before deleting
+        setTimeout(() => setIsDeleting(true), 1000);
       } else if (isDeleting && charIndex === 0) {
         setIsDeleting(false);
         setWordIndex((prev) => (prev + 1) % textToType.length);
@@ -38,84 +69,18 @@ const IntroPage = () => {
     }, typingSpeed);
 
     return () => clearTimeout(timer);
-  }, [charIndex, isDeleting, wordIndex]);
+  }, [charIndex, isDeleting, wordIndex, hasInteracted]);
 
-  // Redirect to login after 5 seconds
+  // Background image cycling
   useEffect(() => {
-    const redirectTimer = setTimeout(() => {
-      navigate('/login');
-    }, 5000);
+    const imageTimer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 2000); // Change image every 2 seconds
 
-    return () => clearTimeout(redirectTimer);
-  }, [navigate]);
+    return () => clearInterval(imageTimer);
+  }, [backgroundImages.length]);
 
-  // Particle animation setup
-  useEffect(() => {
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles = [];
-    const particleCount = 50;
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 6 + 2; // Increased size range from 1-4 to 2-8
-        this.speedX = Math.random() * 2 - 1;
-        this.speedY = Math.random() * 2 - 1;
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        if (this.size > 0.4) this.size -= 0.05; // Increased minimum size from 0.2 to 0.4
-
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-
-    const animateParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((particle) => {
-        particle.update();
-        particle.draw();
-        if (particle.size <= 0.4) {
-          const index = particles.indexOf(particle);
-          particles.splice(index, 1);
-          particles.push(new Particle());
-        }
-      });
-      requestAnimationFrame(animateParticles);
-    };
-
-    animateParticles();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Text animation variants for entrance
+  // Text animation variants
   const textVariants = {
     initial: { y: 50, opacity: 0, scale: 0.95 },
     animate: {
@@ -138,20 +103,30 @@ const IntroPage = () => {
     },
   };
 
+  // Background image animation variants
+  const imageVariants = {
+    initial: { x: '100%', opacity: 0 },
+    animate: { x: 0, opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } },
+    exit: { x: '-100%', opacity: 0, transition: { duration: 0.5, ease: 'easeIn' } },
+  };
+
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
-      {/* Particle canvas */}
-      <canvas
-        id="particleCanvas"
-        className="absolute inset-0 pointer-events-none"
-        style={{ zIndex: 5 }}
-      ></canvas>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background image with animation */}
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={currentImageIndex}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${backgroundImages[currentImageIndex]})` }}
+          variants={imageVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        ></motion.div>
+      </AnimatePresence>
 
       {/* Semi-transparent black overlay */}
-      <div className="absolute inset-0 bg-black/80" style={{ zIndex: 10 }}></div>
+      <div className="absolute inset-0 bg-black/60" style={{ zIndex: 10 }}></div>
 
       {/* Content container */}
       <div className="relative text-center z-20 px-4">
@@ -204,20 +179,20 @@ const IntroPage = () => {
           ></motion.div>
           <p className="text-sm text-white/70 mt-2">Loading...</p>
         </motion.div>
-        {/* Call-to-action button */}
         <motion.button
           className="mt-6 px-6 py-2 bg-cyan-600 text-white rounded-full hover:bg-cyan-700 transition-colors"
           variants={textVariants}
           initial="initial"
           animate="animate"
           transition={{ delay: 1.5 }}
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            setHasInteracted(true); // Ensure interaction state is set on button click
+            navigate('/login');
+          }}
         >
           Get Started
         </motion.button>
       </div>
-
-      {/* Audio for typing effect */}
       <audio ref={audioRef} src="/sounds/type.mp3" preload="auto"></audio>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './Dnavbar';
-import bg from '../../../assets/images/bg3.jpeg';
+import bg from '../../../assets/images/bg9.png';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
 

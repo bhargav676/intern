@@ -8,12 +8,19 @@ const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 const DNavbar = () => {
   const navigate = useNavigate();
   const { deviceId: paramDeviceId } = useParams();
-  const { state } = useLocation();
+  const location = useLocation();
+  const { state } = location;
   const deviceId = paramDeviceId || state?.deviceId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userDetails, setUserDetails] = useState({ username: 'Loading...', email: '', role: '' });
   const [error, setError] = useState(null);
+
+  // Determine the active tab based on current URL
+  let activeTab = '';
+  if (location.pathname.endsWith('/records')) activeTab = 'records';
+  else if (location.pathname.endsWith('/download-csv')) activeTab = 'download-csv';
+  else if (location.pathname.match(/\/device-detail(\/[^/]+)?\/?$/)) activeTab = 'detail';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -61,12 +68,24 @@ const DNavbar = () => {
     return (
       <div className="p-4 text-red-500">
         <p>{error}</p>
-        <button onClick={handleLogout} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+        <button onClick={handleLogout} className="mt-2 px-4 py-2 bg-cyan-500 text-white rounded">
           Log Out
         </button>
       </div>
     );
   }
+
+  // Utility for nav item classes
+  const navItemClass = (tabName) =>
+    `text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300
+    ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}
+    ${activeTab === tabName ? 'text-cyan-500 font-bold after:w-full' : 'text-white after:w-0 hover:after:w-full hover:text-cyan-500'}`;
+
+  // For mobile
+  const mobileNavItemClass = (tabName) =>
+    `text-base cursor-pointer px-3 py-2 rounded transition
+    ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}
+    ${activeTab === tabName ? 'bg-cyan-500 text-white font-bold' : 'hover:bg-cyan-500 hover:text-white'}`;
 
   return (
     <nav className="fixed top-4 left-4 right-4 bg-black/70 backdrop-blur-md text-white px-4 py-3 rounded-lg flex justify-between items-center z-50">
@@ -86,27 +105,27 @@ const DNavbar = () => {
 
       {/* Desktop Menu */}
       <div className="hidden md:flex items-center gap-6">
-        <span 
+        <span
           onClick={() => navigateTo('')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={navItemClass('detail')}
         >
           Device Details
         </span>
-        <span 
+        <span
           onClick={() => navigateTo('records')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={navItemClass('records')}
         >
           Records
         </span>
-        <span 
+        <span
           onClick={() => navigateTo('download-csv')}
-          className={`text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={navItemClass('download-csv')}
         >
           Download
         </span>
-        <span 
+        <span
           onClick={handleDashboardClick}
-          className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full flex items-center gap-1"
+          className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300 hover:after:w-full flex items-center gap-1 hover:text-cyan-500"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -174,34 +193,34 @@ const DNavbar = () => {
               ✕
             </button>
             <div className='ml-5 w-2/2 bg-black/95 h-[500px] p-6 flex flex-col gap-6 shadow-lg'>
-            <span className="text-lg font-semibold mb-2 hover:bg-cyan-500 px-3 py-2 rounded transition cursor-pointer">Menu</span>
-            <span
-              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => navigateTo('')}
-            >
-              Device Details
-            </span>
-            <span
-              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => navigateTo('records')}
-            >
-              Records
-            </span>
-            <span
-              className={`text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition ${!deviceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => navigateTo('download-csv')}
-            >
-              Download
-            </span>
-            <span 
-              className="text-base cursor-pointer px-3 py-2 rounded hover:bg-cyan-500 transition flex items-center gap-1"
-              onClick={handleDashboardClick}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Dashboard
-            </span>
+              <span className="text-lg font-semibold mb-2 text-cyan-500">Menu</span>
+              <span
+                className={mobileNavItemClass('detail')}
+                onClick={() => navigateTo('')}
+              >
+                Device Details
+              </span>
+              <span
+                className={mobileNavItemClass('records')}
+                onClick={() => navigateTo('records')}
+              >
+                Records
+              </span>
+              <span
+                className={mobileNavItemClass('download-csv')}
+                onClick={() => navigateTo('download-csv')}
+              >
+                Download
+              </span>
+              <span
+                className="text-base cursor-pointer px-3 py-2 rounded transition flex items-center gap-1 hover:bg-cyan-500 hover:text-white"
+                onClick={handleDashboardClick}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Dashboard
+              </span>
             </div>
           </div>
         </>

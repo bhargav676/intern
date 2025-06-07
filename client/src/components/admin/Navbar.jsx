@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Bell, Menu } from 'lucide-react';
 import { FaDroplet } from "react-icons/fa6";
 import axios from 'axios';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}`;
 
-const Navbar = ({ onToggleSidebar, onOpenDevicePanel }) => {
+const Navbar = ({onToggleSidebar, onOpenDevicePanel}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDevicePanelOpen, setIsDevicePanelOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,6 +14,13 @@ const Navbar = ({ onToggleSidebar, onOpenDevicePanel }) => {
   const [error, setError] = useState(null);
   const closeDevicePanel = () => setIsDevicePanelOpen(false);
   const navigate = useNavigate();
+  const location = useLocation();
+   
+  let activeTab = '';
+  if (/^\/(admin)?\/?$/.test(location.pathname)) activeTab = 'dashboard';
+  else if (location.pathname.startsWith('/about')) activeTab = 'about';
+  else if (location.pathname.startsWith('/adduser')) activeTab = 'adduser';
+  else if (location.pathname.startsWith('/deleteuser')) activeTab = 'deleteuser';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -55,12 +62,31 @@ const Navbar = ({ onToggleSidebar, onOpenDevicePanel }) => {
     setIsMobileMenuOpen(false);
   };
 
+  const handleDashboardClick = () => {
+    navigate('/admin');
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleAboutClick = () => {
+    navigate('/about');
+    setIsMobileMenuOpen(false);
+  };
+
+  // Utility for nav item classes (desktop)
+  const navItemClass = (tabName) =>
+    `text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:bg-cyan-500 after:transition-all after:duration-300
+    ${activeTab === tabName ? 'text-cyan-500 font-bold after:w-full' : 'text-white after:w-0 hover:after:w-full hover:text-cyan-500'}`;
+
+  // Utility for nav item classes (mobile)
+  const mobileNavItemClass = (tabName) =>
+    `text-base cursor-pointer px-3 py-2 rounded transition
+    ${activeTab === tabName ? 'bg-cyan-500 text-white font-bold' : 'hover:bg-cyan-500 hover:text-white'}`;
 
   if (error) {
     return (
       <div className="p-4 text-red-500">
         <p>{error}</p>
-        <button onClick={handleLogout} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+        <button onClick={handleLogout} className="mt-2 px-4 py-2 bg-cyan-500 text-white rounded">
           Log Out
         </button>
       </div>
@@ -88,18 +114,24 @@ const Navbar = ({ onToggleSidebar, onOpenDevicePanel }) => {
 
       {/* Center: Menu Items (hidden on mobile) */}
       <div className="hidden md:flex items-center gap-6">
-        <span className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full">Dashboard</span>
-        <span className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full">About Us</span>
+        <span 
+          className={navItemClass('dashboard')}
+          onClick={handleDashboardClick}
+        >Dashboard</span>
+        <span 
+          className={navItemClass('about')}
+          onClick={handleAboutClick}
+        >About Us</span>
         {userDetails.role === 'admin' && (
           <>
             <span
-              className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+              className={navItemClass('adduser')}
               onClick={handleAddUserClick}
             >
               Add New User
             </span>
             <span
-              className="text-sm relative cursor-pointer after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+              className={navItemClass('deleteuser')}
               onClick={handleDeleteUserClick}
             >
               Delete User
@@ -160,26 +192,36 @@ const Navbar = ({ onToggleSidebar, onOpenDevicePanel }) => {
             >
               ✕
             </button>
-            <div className=' ml-24 w-2/3 bg-black/95 h-[500px] p-6 flex flex-col gap-6 shadow-lg'>
+            <div className='ml-10 w-2/2 bg-black/95 h-[500px] p-6 flex flex-col gap-6 shadow-lg'>
               <span
-                className="text-lg font-semibold mb-2 cursor-pointer"
+                className="text-lg font-semibold mb-2 cursor-pointer text-cyan-500"
                 onClick={() => {
                   if (window.innerWidth < 768 && onOpenDevicePanel) {
-                    // Mobile: open device panel
                     onOpenDevicePanel();
-                    setIsMobileMenuOpen(false); // close mobile menu
+                    setIsMobileMenuOpen(false);
                   }
-                  // On desktop, do nothing (sidebar is always open)
                 }}
               >
                 Devices
               </span>
-              <span className="text-base cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</span>
-              <span className="text-base cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>About Us</span>
+              <span 
+                className={mobileNavItemClass('dashboard')}
+                onClick={handleDashboardClick}
+              >Dashboard</span>
+              <span 
+                className={mobileNavItemClass('about')}
+                onClick={handleAboutClick}
+              >About Us</span>
               {userDetails.role === 'admin' && (
                 <>
-                  <span className="text-base cursor-pointer" onClick={handleAddUserClick}>Add New User</span>
-                  <span className="text-base cursor-pointer" onClick={handleDeleteUserClick}>Delete User</span>
+                  <span 
+                    className={mobileNavItemClass('adduser')}
+                    onClick={handleAddUserClick}
+                  >Add New User</span>
+                  <span 
+                    className={mobileNavItemClass('deleteuser')}
+                    onClick={handleDeleteUserClick}
+                  >Delete User</span>
                 </>
               )}
             </div>

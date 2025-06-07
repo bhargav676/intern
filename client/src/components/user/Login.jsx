@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import bg from '../../assets/images/b4.jpeg';
+import bg from '../../assets/images/bg10.png';
 import { FaDroplet } from "react-icons/fa6";
 
 const Login = () => {
@@ -48,7 +48,7 @@ const Login = () => {
             <FaDroplet className='w-16 h-16 text-cyan-500'/>
           </div>
         </div>
-        <h2 className="text-2xl font-semibold text-white text-center mb-2">Aquamonitor Login</h2>
+        <h2 className="text-2xl font-semibold text-white text-center mb-2">Jala Rakshak Login</h2>
         <p className="text-white text-center text-sm mb-6">Access your water monitoring dashboard</p>
         {error && (
           <div className="bg-red-50 border border-red-400 text-red-600 p-3 rounded-lg mb-6 text-sm flex items-center">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './Dnavbar';
-import bg from '../../../assets/images/bg3.jpeg';
+import bg from '../../../assets/images/bg9.png';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;

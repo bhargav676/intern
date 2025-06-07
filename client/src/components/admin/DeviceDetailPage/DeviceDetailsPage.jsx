@@ -7,7 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import Navbar from './Dnavbar';
-import bg from '../../../assets/images/bg3.jpeg';
+import bg from '../../../assets/images/bg9.png';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
 
@@ -61,25 +61,25 @@ const DeviceDetailsPage = () => {
         const deviceResponse = await axios.get(`${API_BASE_URL}/admin/devices`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Devices API Response:', deviceResponse.data);
+        
 
         const device = deviceResponse.data.find((d) => d.deviceId === deviceId);
         if (!device || !device.userId) {
           throw new Error(`Device not found or has no associated user for deviceId: ${deviceId}`);
         }
-        console.log('Device Found:', device);
+        
 
         const userId = device.userId;
         const sensorResponse = await axios.get(`${API_BASE_URL}/admin/user-sensor-data/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { _t: Date.now() },
         });
-        console.log('Sensor Data API Response:', sensorResponse.data);
+       
 
         const alarmsResponse = await axios.get(`${API_BASE_URL}/admin/alerts/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Alarms API Response:', alarmsResponse.data);
+     
 
         setDeviceData({
           deviceId: device.deviceId,
@@ -111,7 +111,7 @@ const DeviceDetailsPage = () => {
     fetchDeviceData();
 
     socket.on('sensorDataUpdate', (data) => {
-      console.log('Received sensorDataUpdate:', data);
+      
       if (data.deviceId === deviceId && data.userId) {
         setSensorData((prev) => {
           const newData = [
@@ -158,7 +158,7 @@ const DeviceDetailsPage = () => {
   };
 
   const { latitude, longitude } = getLocation();
-  console.log('Extracted Location:', { latitude, longitude });
+  
 
   // Sort and filter sensor data for chart
   const getSortedData = () => {
@@ -173,7 +173,6 @@ const DeviceDetailsPage = () => {
       return item[parameter] != null && !isNaN(item[parameter]);
     });
 
-    console.log('Data before sorting:', data);
 
     switch (sortOption) {
       case 'newest':
@@ -190,7 +189,7 @@ const DeviceDetailsPage = () => {
   };
 
   const sortedData = getSortedData();
-  console.log('Sorted Data:', sortedData);
+ 
 
   // Chart configuration
   const chartData = {

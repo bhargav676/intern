@@ -4,7 +4,7 @@ import axios from 'axios';
 import { CSVLink } from 'react-csv';
 import { format } from 'date-fns';
 import Navbar from './Dnavbar';
-import bg from '../../../assets/images/bg3.jpeg';
+import bg from '../../../assets/images/bg9.png';
 import { toast } from 'react-toastify';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
