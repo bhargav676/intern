@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './components/user/Login';
-import Layout from './components/user/Layout';
+import Layout from './components/user/layout/Layout';
 import DashboardHomePage from './components/user/DashboardHomePage';
 import Alerts from './components/user/Alerts';
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -14,6 +14,8 @@ import MoreDetails from './components/admin/DeviceDetailPage/MoreDetails';
 import Realtime from './components/admin/DeviceDetailPage/Realtime';
 import IntroPage from './components/Intro';
 import IoTGatewayHealthPage from './components/admin/DeviceDetailPage/IoTGatewayHealthPage';
+import GatewayHealth from './components/user/GatewayHealth';
+import Analytics from './components/user/Analytics';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const token = localStorage.getItem('token');
@@ -69,6 +71,8 @@ const App = () => {
         <Route element={<ProtectedRoute requireAdmin={false}><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardHomePage />} />
           <Route path="/dashboard/alerts" element={<Alerts />} />
+          <Route path="/dashboard/gateway-health" element={<GatewayHealth />} />
+          <Route path="/dashboard/analytics" element={<Analytics/>} />
         </Route>
       </Routes>
     </Router>

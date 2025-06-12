@@ -27,7 +27,7 @@ console.log('adminRoutes type:', typeof adminRoutes);
 
 
 app.use('/api/user', userRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes); 
 
 
 io.on('connection', (socket) => {
