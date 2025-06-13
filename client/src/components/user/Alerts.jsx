@@ -16,7 +16,7 @@ const ALERT_DETAILS = {
     label: 'Turbidity',
     icon: <FaSmog />,
     color: 'yellow',
-    tooltip: 'Turbidity spike detected' ,
+    tooltip: 'Turbidity spike detected',
     badge: 'Turb',
   },
   tds: {
@@ -34,6 +34,8 @@ const Alerts = () => {
   const [sortDesc, setSortDesc] = useState(true);
   const [filterType, setFilterType] = useState('all');
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Number of alerts per page
 
   useEffect(() => {
     if (isLoading) {
@@ -44,7 +46,7 @@ const Alerts = () => {
     }
   }, [isLoading]);
 
-
+  // Filter and sort alerts
   let filtered = alerts || [];
   if (filterType !== 'all') filtered = filtered.filter((a) => a.type === filterType);
   if (search.trim())
@@ -56,6 +58,18 @@ const Alerts = () => {
       ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAlerts = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getAlertStyle = (alert) => {
     const base = `rounded-xl shadow-lg p-5 flex items-center transition-all duration-300 hover:scale-[1.025] hover:shadow-2xl border-l-4`;
@@ -211,8 +225,8 @@ const Alerts = () => {
               }`}
             ></div>
           </div>
-        ) : filtered.length > 0 ? (
-          filtered.map((alert, index) => (
+        ) : paginatedAlerts.length > 0 ? (
+          paginatedAlerts.map((alert, index) => (
             <div
               key={alert.id || index}
               className={getAlertStyle(alert)}
@@ -279,8 +293,46 @@ const Alerts = () => {
           </div>
         )}
       </div>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded border shadow-sm transition font-semibold ${
+              currentPage === 1
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : isDarkMode
+                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
+            }`}
+          >
+            Previous
+          </button>
+        <span
+          className={`text-sm font-medium ${
+            isDarkMode ? 'text-slate-300' : 'text-sky-600'
+          }`}
+        >
+          Page {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filtered.length)} of {filtered.length}
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 rounded border shadow-sm transition font-semibold ${
+            currentPage === totalPages
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : isDarkMode
+              ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+              : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
+          }`}
+        >
+          Next
+        </button>
+    </div>
+      )}
     </div>
   );
 };
 
-export default Alerts;
+export default React.memo(Alerts);

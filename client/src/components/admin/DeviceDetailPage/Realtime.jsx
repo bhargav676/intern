@@ -7,25 +7,25 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaVial, FaSmog, FaTint } from 'react-icons/fa';
 import Navbar from './Dnavbar';
 
-const API_BASE_URL = 'http://localhost:5000/api';
-const socket = io('http://localhost:5000', {
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const socket = io(`${import.meta.env.VITE_API_URL}`, {
   reconnection: true,
   reconnectionAttempts: 5,
-  reconnectionDelay: 1000, 
-});
- 
+  reconnectionDelay: 1000,
+}); 
+
 const Realtime = () => {
   const navigate = useNavigate();
-  const { deviceId: paramDeviceId } = useParams();
+  const { deviceId: paramDeviceId } = useParams(); 
   const { state } = useLocation();
-  const rawDeviceId = paramDeviceId || state?.deviceId;
+  const rawDeviceId = paramDeviceId || state?.deviceId; 
   const deviceId = rawDeviceId?.startsWith('user-') ? rawDeviceId.replace('user-', '') : rawDeviceId;
   const [sensorData, setSensorData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isDarkMode] = useState(false); // Set to false for simplicity; adjust if needed
+  const [loading, setLoading] = useState(true); 
+  const [isDarkMode] = useState(false); 
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token'); 
     if (!token) {
       navigate('/login');
       return;

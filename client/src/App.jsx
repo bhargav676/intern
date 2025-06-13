@@ -16,6 +16,7 @@ import IntroPage from './components/Intro';
 import IoTGatewayHealthPage from './components/admin/DeviceDetailPage/IoTGatewayHealthPage';
 import GatewayHealth from './components/user/GatewayHealth';
 import Analytics from './components/user/Analytics';
+import Profile from './components/user/Profile';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const token = localStorage.getItem('token');
@@ -73,6 +74,7 @@ const App = () => {
           <Route path="/dashboard/alerts" element={<Alerts />} />
           <Route path="/dashboard/gateway-health" element={<GatewayHealth />} />
           <Route path="/dashboard/analytics" element={<Analytics/>} />
+          <Route path="/dashboard/profile" element={<Profile />} />
         </Route>
       </Routes>
     </Router>

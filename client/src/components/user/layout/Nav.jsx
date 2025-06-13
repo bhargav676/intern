@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaDroplet } from 'react-icons/fa6';
-import {
-  FaBars, FaTimes, FaBell, FaUserCircle,
-  FaTachometerAlt, FaHistory, FaHeartbeat, FaChartBar, FaInfoCircle, FaSignOutAlt, FaCopy, FaCheck,
-  FaVial, FaSmog, FaTint
-} from 'react-icons/fa';
+import {FaBars, FaTimes, FaBell, FaUserCircle,FaTachometerAlt, FaHistory, FaHeartbeat, FaChartBar, FaInfoCircle, FaSignOutAlt, FaCopy, FaCheck,FaVial, FaSmog, FaTint} from 'react-icons/fa';
 
 const navLinks = [
   { path: '/dashboard', exact: true, icon: FaTachometerAlt, label: 'Dashboard' },
@@ -31,9 +27,8 @@ const Nav = ({
   const [isAccessIdCopied, setIsAccessIdCopied] = useState(false);
 
   const userDropdownRef = useRef(null);
-  const notificationDropdownRef = useRef(null); // Added for notification panel
+  const notificationDropdownRef = useRef(null);
 
-  // Avatar initials
   const getInitials = (name) => name ? name.charAt(0).toUpperCase() : '?';
 
   const markAlertsAsRead = () => setHasUnreadData(false);
@@ -51,13 +46,12 @@ const Nav = ({
     }
   };
 
-  // Close profile and notification popups on route/page change
   useEffect(() => {
     setIsUserDropdownOpen(false);
     setIsNotificationDropdownOpen(false);
   }, [location.pathname]);
 
-  // Handle outside click for user dropdown
+
   useEffect(() => {
     if (!isUserDropdownOpen) return;
     const handleClickOutside = (event) => {
@@ -73,7 +67,6 @@ const Nav = ({
     return () => document.removeEventListener('mousedown', handleClickOutside, true);
   }, [isUserDropdownOpen]);
 
-  // Handle outside click for notification dropdown
   useEffect(() => {
     if (!isNotificationDropdownOpen) return;
     const handleClickOutside = (event) => {
@@ -89,12 +82,11 @@ const Nav = ({
     return () => document.removeEventListener('mousedown', handleClickOutside, true);
   }, [isNotificationDropdownOpen]);
 
-  // Get the latest 5 alerts, sorted by timestamp (newest first)
+
   const latestAlerts = [...alerts]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 5);
 
-  // Get icon and color based on alert type, matching Alerts component
   const getAlertIcon = (type) => {
     switch (type) {
       case 'ph':
@@ -143,7 +135,6 @@ const Nav = ({
         })}
       </nav>
 
-      {/* Right Side: Notifications and User */}
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Notifications */}
         <div className="relative" ref={notificationDropdownRef}>
@@ -218,10 +209,6 @@ const Nav = ({
                   <FaUserCircle className="mr-3 text-base text-gray-700 group-hover:text-cyan-600" />
                   Your Profile
                 </Link>
-                <Link to="/dashboard/settings" className="group flex items-center w-full px-4 py-2.5 text-sm rounded-md text-gray-700 hover:bg-cyan-50 hover:text-cyan-600">
-                  <FaHistory className="mr-3 text-base text-gray-700 group-hover:text-cyan-600" />
-                  Settings
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="group flex items-center w-full px-4 py-2.5 text-sm rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600"
@@ -276,14 +263,6 @@ const Nav = ({
             >
               <FaUserCircle className="mr-2 text-base text-gray-700 group-hover:text-cyan-600" />
               Your Profile
-            </Link>
-            <Link
-              to="/dashboard/settings"
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-cyan-50 hover:text-cyan-600"
-            >
-              <FaHistory className="mr-2 text-base text-gray-700 group-hover:text-cyan-600" />
-              Settings
             </Link>
             <button
               onClick={() => {

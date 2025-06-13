@@ -6,15 +6,17 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaDownload, FaCalendarAlt } from 'react-icons/fa';
 import Papa from 'papaparse';
 
+
 const Analytics = () => {
   const { isDarkMode, formatTimestampToIST, accessId } = useOutletContext();
   const [sensorData, setSensorData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [totalRecords, setTotalRecords] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,15 +31,19 @@ const Analytics = () => {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/sensor/data`, {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            page,
-            limit: 50,
+            page: currentPage,
+            limit: itemsPerPage,
             sort: 'desc',
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
           },
         });
         const { data, pagination } = response.data;
-        setSensorData((prev) => (page === 1 ? data : [...prev, ...data]));
+        console.log('Fetched sensor data:', data);
+        console.log('Pagination info:', pagination);
+        setSensorData(data); 
         setTotalRecords(pagination.totalRecords);
-        setHasMore(pagination.page < pagination.totalPages);
+        setTotalPages(pagination.totalPages);
       } catch (err) {
         console.error('Failed to fetch sensor data:', err.response?.status, err.response?.data || err.message);
         setSensorData([]);
@@ -48,7 +54,7 @@ const Analytics = () => {
     };
 
     fetchSensorData();
-  }, [page, isDarkMode]);
+  }, [currentPage, isDarkMode, startDate, endDate]);
 
   const downloadCSV = (filtered = false) => {
     try {
@@ -102,8 +108,10 @@ const Analytics = () => {
     const value = e.target.value;
     if (type === 'start') {
       setStartDate(value);
+      setCurrentPage(1);
     } else {
       setEndDate(value);
+      setCurrentPage(1);
     }
   };
 
@@ -117,11 +125,19 @@ const Analytics = () => {
         return recordDate >= start && recordDate <= end;
       });
     }
+    console.log('Filtered data length:', data.length);
     return data.map((record) => ({
       ...record,
       timestamp: formatTimestampToIST(record.timestamp),
     }));
   }, [sensorData, startDate, endDate, formatTimestampToIST]);
+
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div
@@ -201,7 +217,7 @@ const Analytics = () => {
               className={`flex items-center gap-1 rounded px-3 py-1 border shadow-sm transition font-semibold ${
                 isDarkMode
                   ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
+                  : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
               }`}
               title="Download filtered data as CSV"
             >
@@ -211,7 +227,7 @@ const Analytics = () => {
         </div>
       </div>
       <div className="space-y-4">
-        {isLoading && page === 1 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <div
               className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
@@ -263,16 +279,46 @@ const Analytics = () => {
                 ))}
               </tbody>
             </table>
-            {hasMore && (
-              <div className="text-center mt-6">
+            {totalPages > 1 ? (
+              <div className="flex justify-between items-center mt-6">
                 <button
-                  onClick={() => setPage((prev) => prev + 1)}
-                  className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition"
-                  disabled={isLoading}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded border shadow-sm transition font-semibold ${
+                    currentPage === 1
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
+                  }`}
                 >
-                  {isLoading ? 'Loading...' : 'Load More'}
+                  Previous
+                </button>
+                <span
+                  className={`text-sm font-medium ${
+                    isDarkMode ? 'text-slate-300' : 'text-sky-600'
+                  }`}
+                >
+                  Page {currentPage} of {totalPages} ({totalRecords} records)
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded border shadow-sm transition font-semibold ${
+                    currentPage === totalPages
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                      : 'bg-white border-sky-300 text-sky-800 hover:bg-sky-100'
+                  }`}
+                >
+                  Next
                 </button>
               </div>
+            ) : (
+              <p className={`text-sm mt-4 text-center ${isDarkMode ? 'text-slate-300' : 'text-sky-600'}`}>
+                Only one page of data available ({totalRecords} records).
+              </p>
             )}
             <p className={`text-sm mt-4 ${isDarkMode ? 'text-slate-300' : 'text-sky-600'}`}>
               Showing {filteredData.length} of {totalRecords} records
@@ -292,4 +338,4 @@ const Analytics = () => {
   );
 };
 
-export default Analytics;
+export default React.memo(Analytics);
